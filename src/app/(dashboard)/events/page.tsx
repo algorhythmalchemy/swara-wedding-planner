@@ -20,6 +20,24 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
   MapPin,
   Clock,
   CheckCircle2,
@@ -28,6 +46,7 @@ import {
   Sun,
   Moon,
   Star,
+  Plus,
 } from "lucide-react";
 
 const PHASE_LABELS: Record<EventPhase, string> = {
@@ -205,9 +224,21 @@ function EventCard({
 
 export default function EventsPage() {
   const events = useWeddingStore((s) => s.events);
+  const addEvent = useWeddingStore((s) => s.addEvent);
   const toggleEventComplete = useWeddingStore((s) => s.toggleEventComplete);
 
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Add Event form state
+  const [newName, setNewName] = useState("");
+  const [newNameKannada, setNewNameKannada] = useState("");
+  const [newNameTelugu, setNewNameTelugu] = useState("");
+  const [newPhase, setNewPhase] = useState<EventPhase>("pre-wedding");
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [newLocation, setNewLocation] = useState("");
+  const [newDescription, setNewDescription] = useState("");
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => a.order - b.order),
@@ -239,19 +270,165 @@ export default function EventsPage() {
     { value: "post-wedding", label: "Post-Wedding" },
   ];
 
+  function handleAddEvent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newName.trim()) return;
+
+    const maxOrder = events.reduce((max, ev) => Math.max(max, ev.order), 0);
+
+    addEvent({
+      id: `ev-${Date.now()}`,
+      name: newName.trim(),
+      nameKannada: newNameKannada.trim() || undefined,
+      nameTelugu: newNameTelugu.trim() || undefined,
+      phase: newPhase,
+      date: newDate || undefined,
+      time: newTime || undefined,
+      location: newLocation.trim() || undefined,
+      description: newDescription.trim() || undefined,
+      isCompleted: false,
+      order: maxOrder + 1,
+    });
+
+    // Reset form
+    setNewName("");
+    setNewNameKannada("");
+    setNewNameTelugu("");
+    setNewPhase("pre-wedding");
+    setNewDate("");
+    setNewTime("");
+    setNewLocation("");
+    setNewDescription("");
+    setDialogOpen(false);
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-vermillion">
-          Ritual Timeline
-        </h1>
-        <p className="mt-1 text-lg text-turmeric font-medium">
-          Shubha Vivaha Karyakrama
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {completedCount} of {filteredEvents.length} rituals completed
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-vermillion">
+            Ritual Timeline
+          </h1>
+          <p className="mt-1 text-lg text-turmeric font-medium">
+            Shubha Vivaha Karyakrama
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {completedCount} of {filteredEvents.length} rituals completed
+          </p>
+        </div>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger
+            render={
+              <Button className="bg-turmeric text-maroon hover:bg-turmeric/90">
+                <Plus className="mr-1 size-4" />
+                Add Ritual
+              </Button>
+            }
+          />
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Ritual / Event</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddEvent} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="ev-name">Ritual Name *</Label>
+                <Input
+                  id="ev-name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g., Mangala Snanam"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="ev-name-kn">Name (Kannada)</Label>
+                  <Input
+                    id="ev-name-kn"
+                    value={newNameKannada}
+                    onChange={(e) => setNewNameKannada(e.target.value)}
+                    placeholder="ಕನ್ನಡ"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ev-name-te">Name (Telugu)</Label>
+                  <Input
+                    id="ev-name-te"
+                    value={newNameTelugu}
+                    onChange={(e) => setNewNameTelugu(e.target.value)}
+                    placeholder="తెలుగు"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ev-phase">Phase</Label>
+                <Select value={newPhase} onValueChange={(v) => setNewPhase(v as EventPhase)}>
+                  <SelectTrigger id="ev-phase">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pre-wedding">Pre-Wedding</SelectItem>
+                    <SelectItem value="wedding-day">Wedding Day</SelectItem>
+                    <SelectItem value="post-wedding">Post-Wedding</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="ev-date">Date</Label>
+                  <Input
+                    id="ev-date"
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ev-time">Time</Label>
+                  <Input
+                    id="ev-time"
+                    type="time"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ev-location">Location</Label>
+                <Input
+                  id="ev-location"
+                  value={newLocation}
+                  onChange={(e) => setNewLocation(e.target.value)}
+                  placeholder="e.g., Kalyana Mantapa"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ev-desc">Description</Label>
+                <Textarea
+                  id="ev-desc"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  placeholder="Brief description of the ritual..."
+                  rows={3}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-vermillion text-white hover:bg-vermillion/90"
+              >
+                Add Ritual
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Phase tabs */}
@@ -278,9 +455,6 @@ export default function EventsPage() {
           ))}
         </TabsList>
 
-        {/* All tab panels render the same filtered timeline. We use the tab
-            click handler with local state rather than separate TabsContent
-            panels so the timeline stays in a single scrollable view. */}
         {tabs.map((tab, idx) => (
           <TabsContent key={tab.value} value={idx}>
             {filteredEvents.length === 0 ? (
@@ -288,6 +462,9 @@ export default function EventsPage() {
                 <Star className="size-10 text-turmeric/50 mb-3" />
                 <p className="text-muted-foreground font-medium">
                   No events in this phase yet.
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Click &quot;Add Ritual&quot; to add one.
                 </p>
               </div>
             ) : (

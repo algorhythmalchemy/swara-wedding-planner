@@ -13,6 +13,7 @@ import {
 } from "@/types";
 import {
   fetchAllData,
+  dbAddEvent,
   dbToggleEventComplete,
   dbAddTask,
   dbToggleTaskComplete,
@@ -57,6 +58,7 @@ interface WeddingStore {
   hydrate: () => Promise<void>;
 
   // Actions - Events
+  addEvent: (event: WeddingEvent) => void;
   toggleEventComplete: (id: string) => void;
 
   // Actions - Tasks
@@ -120,6 +122,18 @@ export const useWeddingStore = create<WeddingStore>((set, get) => ({
       console.error("Failed to hydrate from Supabase:", err);
       set({ isLoading: false, isHydrated: true });
     }
+  },
+
+  addEvent: (event) => {
+    const tempId = event.id;
+    set((state) => ({ events: [...state.events, event] }));
+    dbAddEvent(event).then((saved) => {
+      if (saved) {
+        set((state) => ({
+          events: state.events.map((e) => (e.id === tempId ? saved : e)),
+        }));
+      }
+    });
   },
 
   toggleEventComplete: (id) => {
