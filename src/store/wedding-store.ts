@@ -22,6 +22,7 @@ import {
   dbUpdateGuest,
   dbDeleteGuest,
   dbUpdateRSVP,
+  dbAddBudgetCategory,
   dbAddExpense,
   dbDeleteExpense,
   dbUpdateBudgetCategorySpent,
@@ -75,6 +76,7 @@ interface WeddingStore {
   updateRSVP: (id: string, rsvp: Partial<RSVP>) => void;
 
   // Actions - Budget
+  addBudgetCategory: (category: BudgetCategory) => void;
   addExpense: (expense: Expense) => void;
   deleteExpense: (id: string) => void;
 
@@ -207,6 +209,20 @@ export const useWeddingStore = create<WeddingStore>((set, get) => ({
       rsvps: state.rsvps.map((r) => (r.id === id ? { ...r, ...rsvp } : r)),
     }));
     dbUpdateRSVP(id, rsvp);
+  },
+
+  addBudgetCategory: (category) => {
+    const tempId = category.id;
+    set((state) => ({ budgetCategories: [...state.budgetCategories, category] }));
+    dbAddBudgetCategory(category).then((saved) => {
+      if (saved) {
+        set((state) => ({
+          budgetCategories: state.budgetCategories.map((bc) =>
+            bc.id === tempId ? saved : bc
+          ),
+        }));
+      }
+    });
   },
 
   addExpense: (expense) => {

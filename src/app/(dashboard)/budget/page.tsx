@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWeddingStore } from "@/store/wedding-store";
-import type { Expense, PaymentStatus } from "@/types";
+import type { BudgetCategory, Expense, PaymentStatus } from "@/types";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
@@ -68,10 +68,16 @@ function getProgressColor(percentage: number): string {
 }
 
 export default function BudgetPage() {
-  const { budgetCategories, expenses, addExpense, deleteExpense } =
+  const { budgetCategories, expenses, addBudgetCategory, addExpense, deleteExpense } =
     useWeddingStore();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    nameLocal: "",
+    allocated: "",
+  });
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
@@ -120,6 +126,23 @@ export default function BudgetPage() {
     setDialogOpen(false);
   };
 
+  const handleAddCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name || !categoryForm.allocated) return;
+
+    const category: BudgetCategory = {
+      id: `bc-${Date.now()}`,
+      name: categoryForm.name,
+      nameLocal: categoryForm.nameLocal || undefined,
+      allocated: Number(categoryForm.allocated),
+      spent: 0,
+    };
+
+    addBudgetCategory(category);
+    setCategoryForm({ name: "", nameLocal: "", allocated: "" });
+    setCategoryDialogOpen(false);
+  };
+
   const getCategoryName = (categoryId: string) => {
     const cat = budgetCategories.find((c) => c.id === categoryId);
     return cat?.name ?? "Unknown";
@@ -135,6 +158,58 @@ export default function BudgetPage() {
             Track and manage your wedding expenses
           </p>
         </div>
+        <div className="flex gap-2 flex-wrap">
+        <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+          <DialogTrigger
+            render={
+              <Button variant="outline" className="border-vermillion text-vermillion hover:bg-vermillion/10">
+                <Plus className="mr-1 size-4" />
+                Add Budget Category
+              </Button>
+            }
+          />
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Budget Category</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddCategory} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="cat-name">Category Name *</Label>
+                <Input
+                  id="cat-name"
+                  placeholder="e.g. Catering, Venue, Silk Sarees"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cat-local">Local Name (Kannada/Telugu)</Label>
+                <Input
+                  id="cat-local"
+                  placeholder="e.g. ಊಟ / భోజనం"
+                  value={categoryForm.nameLocal}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, nameLocal: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cat-allocated">Allocated Budget (INR) *</Label>
+                <Input
+                  id="cat-allocated"
+                  type="number"
+                  placeholder="e.g. 200000"
+                  value={categoryForm.allocated}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, allocated: e.target.value })}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full bg-vermillion text-white hover:bg-vermillion/90">
+                Add Category
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger
             render={
@@ -268,6 +343,7 @@ export default function BudgetPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -279,6 +279,17 @@ export async function dbUpdateRSVP(id: string, rsvp: Partial<RSVP>) {
 }
 
 // --- Expenses ---
+export async function dbAddBudgetCategory(category: BudgetCategory) {
+  if (!supabase) return null;
+  const { data } = await supabase.from("budget_categories").insert({
+    name: category.name,
+    name_local: category.nameLocal,
+    allocated: category.allocated,
+    spent: category.spent,
+  }).select().single();
+  return data ? toBudgetCategory(data) : null;
+}
+
 export async function dbAddExpense(expense: Expense) {
   if (!supabase) return null;
   const { data } = await supabase.from("expenses").insert({
