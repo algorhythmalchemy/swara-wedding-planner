@@ -261,7 +261,11 @@ export default function BudgetPage() {
                   required
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select category" />
+                    <span className="flex flex-1 text-left truncate">
+                      {formData.categoryId
+                        ? (budgetCategories.find((c) => c.id === formData.categoryId)?.name ?? "Select category")
+                        : <span className="text-muted-foreground">Select category</span>}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {budgetCategories.map((cat) => (
@@ -311,7 +315,9 @@ export default function BudgetPage() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <span className="flex flex-1 text-left truncate">
+                      {paymentStatusConfig[formData.paymentStatus]?.label ?? <span className="text-muted-foreground">Select status</span>}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
